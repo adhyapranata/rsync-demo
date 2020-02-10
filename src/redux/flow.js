@@ -1,5 +1,6 @@
 import { createAction } from '@reduxjs/toolkit';
 import { userSlice, postSlice } from './slice';
+import { loadInitialDataParams } from './params';
 
 export const loadInitialData = createAction('GET_FARMS', (payload) => {
   return {
@@ -8,7 +9,10 @@ export const loadInitialData = createAction('GET_FARMS', (payload) => {
       flow: {
         actions: [
           { effect: userSlice.actions.requestGetUsers },
-          { effect: postSlice.actions.requestGetPosts }
+          {
+            prepareParams: loadInitialDataParams.requestGetPosts,
+            effect: postSlice.actions.requestGetPosts,
+          }
         ],
         resolve: { type: 'flow/resolveLoadInitialData' },
         reject: { type: 'flow/rejectLoadInitialData' },

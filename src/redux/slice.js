@@ -77,7 +77,7 @@ export const postSlice = createSlice({
           payload,
           meta: {
             async: {
-              effect: () => api.post.index(),
+              effect: payload => api.post.index(),
               resolve: { type: 'post/resolveRequestGetPosts' },
               reject: { type: 'post/rejectRequestGetPosts' },
               take: 'latest'

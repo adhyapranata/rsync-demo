@@ -61,7 +61,7 @@ export const isTakeLatest = (take, type, queue) => {
   );
 }
 
-export const handleAsync = async (store, type, payload, meta, prevResponse = []) => {
+export const handleAsync = async (store, type, payload, meta) => {
   let response;
 
   const { effect, resolve, reject } = meta,
@@ -72,14 +72,9 @@ export const handleAsync = async (store, type, payload, meta, prevResponse = [])
   updateState(type);
 
   try {
-    response = await effect(payload, prevResponse);
+    response = await effect(payload);
 
-    if (isTakeLatest(take, type, queue)) {
-      console.log('cancelled', type, queue, state, payload.params.message);
-      return;
-    }
-
-    console.log('passed', type, queue, state, payload.params.message);
+    if (isTakeLatest(take, type, queue)) return;
 
     store.dispatch({
       type: resolve.type,
@@ -96,7 +91,6 @@ export const handleAsync = async (store, type, payload, meta, prevResponse = [])
 }
 
 export const handleFlow = async (store, type, payload, meta) => {
-  console.log({ flowQueue: flowQueue.length, parallel: meta.parallel })
   if (flowQueue.length) return;
 
   let response,
@@ -114,22 +108,29 @@ export const handleFlow = async (store, type, payload, meta) => {
     }
 
     for (const actionCallback of actions) {
-      action = actionCallback.effect(payload)
+      action = actionCallback.effect(payload);
+      payload = { ...payload, prevResponse };
 
       store.dispatch({
         type: action.type,
         payload: { ...payload, ignoreEffect: true }
       });
 
+      if (actionCallback.prepareParams) {
+        payload = {
+          ...payload,
+          params: actionCallback.prepareParams({...payload, prevResponse})
+        };
+      }
+
       response = await handleAsync(
         store,
         action.type,
         payload,
-        action.meta.async,
-        prevResponse
+        action.meta.async
       )
 
-      prevResponse = [...prevResponse, response];
+      prevResponse = [...prevResponse, { response, type: action.type }];
     }
 
     store.dispatch({ type: resolve.type });

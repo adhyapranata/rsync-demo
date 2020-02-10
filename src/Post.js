@@ -25,7 +25,7 @@ function Post(props) {
 }
 
 export function init(props) {
-  props.loadInitialData({params: {foo: 'bar', message: 'first'}});
+  props.loadInitialData({foo: 'bar', message: 'first'});
 
     setTimeout(() => {
       props.loadInitialData({params: {foo: 'bar', message: 'second'}});
