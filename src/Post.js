@@ -6,13 +6,16 @@ import './Post.css';
 
 
 function Post(props) {
-  useEffect(() => {
-    // props.requestGetPosts({params: {foo: 'bar'}});
-    props.loadInitialData({params: {foo: 'bar'}});
+  useEffect(() => {   
+    init(props);
+    // requestGetPosts(props);
   }, []);
 
-  console.log('Post state:', props.post);
-  console.log('User state:', props.user);
+  useEffect(() => {   
+    console.log('User state:', props.user);
+    console.log('Post state:', props.post);
+  }, [props.user.data, props.post.data]);
+
 
   return (
     <div className="Post">
@@ -20,6 +23,31 @@ function Post(props) {
     </div>  
   );
 }
+
+export function init(props) {
+  props.loadInitialData({params: {foo: 'bar', message: 'first'}});
+
+    setTimeout(() => {
+      props.loadInitialData({params: {foo: 'bar', message: 'second'}});
+    }, 300);
+};
+
+export function requestGetPosts(props) {
+  props.requestGetPosts({params: {foo: 'bar', message: 'first'}});
+
+  setTimeout(() => {
+    props.requestGetPosts({params: {foo: 'bar', message: 'second'}});
+
+    setTimeout(() => {
+      props.requestGetPosts({params: {foo: 'bar', message: 'third'}});
+
+      setTimeout(() => {
+        // should only run this last one
+        props.requestGetPosts({params: {foo: 'bar', message: 'fourth'}});
+      }, 300);
+    }, 300);
+  }, 300);
+};
 
 const mapStateToProps = (state) => ({
   user: state.user,

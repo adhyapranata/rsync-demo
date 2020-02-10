@@ -12,7 +12,7 @@ export const loadInitialData = createAction('GET_FARMS', (payload) => {
         ],
         resolve: { type: 'flow/resolveLoadInitialData' },
         reject: { type: 'flow/rejectLoadInitialData' },
-        take: 'latest'
+        parallel: false
       }
     }
   }
