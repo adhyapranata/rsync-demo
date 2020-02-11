@@ -10,7 +10,7 @@ export const loadInitialData = createAction('LOAD_INITIAL_DATA', (payload) => {
         actions: [
           {
             effect: userSlice.actions.requestGetUsers,
-            break: response => !response.data.args.users.length
+            break: ({ response }) => !response.data.args.users.length
           },
           {
             prepare: loadInitialDataParams.requestGetPosts,
@@ -19,7 +19,7 @@ export const loadInitialData = createAction('LOAD_INITIAL_DATA', (payload) => {
         ],
         resolve: { type: 'flow/resolveLoadInitialData' },
         reject: { type: 'flow/rejectLoadInitialData' },
-        allowParallel: false
+        take: 'every:serial'
       }
     }
   }
