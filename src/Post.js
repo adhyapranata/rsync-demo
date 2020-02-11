@@ -14,7 +14,7 @@ function Post(props) {
   useEffect(() => {   
     console.log('User state:', props.user);
     console.log('Post state:', props.post);
-  }, [props.user.data, props.post.data]);
+  }, [props.user, props.post]);
 
 
   return (

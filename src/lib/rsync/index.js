@@ -1,9 +1,9 @@
 let flowQueue = [],
-  index = 0,
-  state = {
-    runningTasks: [],
-    cancelledTasks: []
-  };
+    index = 0,
+    state = {
+      runningTasks: [],
+      cancelledTasks: []
+    };
 
 export const findTasks = type => {
   const { runningTasks, cancelledTasks } = state;
@@ -61,12 +61,42 @@ export const isTakeLatest = (take, type, queue) => {
   );
 }
 
+export const attachParamsToPayload = (payload, actionCallback, prevResponse) => {
+  return {
+    ...payload,
+    params: actionCallback.prepare({
+      ...payload,
+      prevResponse
+    })
+  }
+}
+
+export const triggerReducer = (store, action, payload) => {
+  store.dispatch({
+    type: action.type,
+    payload: { ...payload, ignoreEffect: true }
+  });
+}
+
+export const triggerEffect = async (store, action, payload) => {
+  return await handleAsync(
+    store,
+    action.type,
+    payload,
+    action.meta.async
+  )
+}
+
+export const isUndefined = val => {
+  return typeof val === 'undefined';
+}
+
 export const handleAsync = async (store, type, payload, meta) => {
   let response;
 
   const { effect, resolve, reject } = meta,
-    queue = index,
-    take = meta.take || 'every';
+        queue = index,
+        take = meta.take || 'every';
 
 
   updateState(type);
@@ -78,12 +108,12 @@ export const handleAsync = async (store, type, payload, meta) => {
 
     store.dispatch({
       type: resolve.type,
-      payload: { ...payload, response }
+      payload: { ...payload, type, response }
     });
   } catch (error) {
     store.dispatch({
       type: reject.type,
-      error: { ...payload, error }
+      error: { ...payload, type, error }
     });
   }
 
@@ -98,12 +128,10 @@ export const handleFlow = async (store, type, payload, meta) => {
     action = {};
 
   const { actions, resolve, reject } = meta,
-    parallel = typeof meta.parallel === 'undefined'
-      ? false
-      : meta.parallel;
+    allowParallel = isUndefined(meta.allowParallel) ? false : meta.allowParallel;
 
   try {
-    if (!parallel) {
+    if (!allowParallel) {
       flowQueue = [...flowQueue, type];
     }
 
@@ -111,24 +139,17 @@ export const handleFlow = async (store, type, payload, meta) => {
       action = actionCallback.effect(payload);
       payload = { ...payload, prevResponse };
 
-      store.dispatch({
-        type: action.type,
-        payload: { ...payload, ignoreEffect: true }
-      });
+      triggerReducer(store, action, payload);
 
-      if (actionCallback.prepareParams) {
-        payload = {
-          ...payload,
-          params: actionCallback.prepareParams({...payload, prevResponse})
-        };
+      if (actionCallback.prepare) {
+        payload = attachParamsToPayload(payload, actionCallback, prevResponse);
       }
 
-      response = await handleAsync(
-        store,
-        action.type,
-        payload,
-        action.meta.async
-      )
+      response = await triggerEffect(store, action, payload)
+
+      if (actionCallback.break && actionCallback.break(response)) {
+        throw Error(`${type}_EXCEPTION: Action ${action.type} is broken by user condition`)
+      }
 
       prevResponse = [...prevResponse, { response, type: action.type }];
     }
