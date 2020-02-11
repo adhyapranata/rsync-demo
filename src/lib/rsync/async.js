@@ -1,98 +1,102 @@
-let index = 0;
-let state = {
-  runningTasks: [],
-  cancelledTasks: []
-};
+class Async {
+  index = 0;
+  state = {
+    runningTasks: [],
+    cancelledTasks: []
+  };
 
-export const findTasks = type => {
-  const { runningTasks, cancelledTasks } = state;
+  _addTask(type) {
+    this.state.runningTasks = [
+      ...this.state.runningTasks,
+      { index: this.index, type }
+    ];
 
-  return {
-    prevRunningTask: runningTasks.find(task => task.type === type),
-    prevCancelledTask: cancelledTasks.find(task => task.type === type)
-  }
-}
-
-export const addTask = type => {
-  state.runningTasks = [
-    ...state.runningTasks,
-    { index, type }
-  ];
-
-  index++;
-}
-
-export const updateTask = type => {
-  state.runningTasks = state.runningTasks.map(task => {
-    return task.type === type
-      ? { ...task, index }
-      : task;
-  });
-
-  state.cancelledTasks = [
-    ...state.cancelledTasks,
-    { index: index - 1, type }
-  ];
-
-  index++;
-}
-
-export const updateState = type => {
-  const { prevRunningTask, prevCancelledTask } = findTasks(type);
-
-  if (!prevRunningTask && !prevCancelledTask) {
-    addTask(type);
-    return;
+    this.index++;
   }
 
-  if (prevRunningTask) {
-    updateTask(type);
-    return;
+  _findTasks(type) {
+    const { runningTasks, cancelledTasks } = this.state;
+
+    return {
+      prevRunningTask: runningTasks.find(task => task.type === type),
+      prevCancelledTask: cancelledTasks.find(task => task.type === type)
+    }
   }
-}
 
-export const isTakeLatest = (take, type, queue) => {
-  return (
-    take === 'latest' &&
-    !state.runningTasks.find(task => (
-      task.type === type && task.index === queue
-    ))
-  );
-}
+  _isTakeLatest(take, type, queue) {
+    return (
+      take === 'latest' &&
+      !this.state.runningTasks.find(task => (
+        task.type === type && task.index === queue
+      ))
+    );
+  }
 
-export default async (store, type, payload, meta) => {
-  let response;
-  const { effect, resolve, reject } = meta;
-  const queue = index;
-  const take = meta.take || 'every:parallel';
+  _updateState(type) {
+    const { prevRunningTask, prevCancelledTask } = this._findTasks(type);
 
-  updateState(type);
+    if (!prevRunningTask && !prevCancelledTask) {
+      this._addTask(type);
+      return;
+    }
 
-  try {
-    response = await effect(payload);
+    if (prevRunningTask) {
+      this._updateTask(type);
+      return;
+    }
+  }
 
-    if (isTakeLatest(take, type, queue)) return;
-
-    store.dispatch({
-      type: resolve.type,
-      payload: {
-        ...payload,
-        type,
-        response,
-        state: store.getState()
-      }
+  _updateTask(type) {
+    this.state.runningTasks = this.state.runningTasks.map(task => {
+      return task.type === type
+        ? { ...task, index: this.index }
+        : task;
     });
-  } catch (error) {
-    store.dispatch({
-      type: reject.type,
-      error: {
-        ...payload,
-        type,
-        error,
-        state: store.getState()
-      }
-    });
+
+    this.state.cancelledTasks = [
+      ...this.state.cancelledTasks,
+      { index: this.index - 1, type }
+    ];
+
+    this.index++;
   }
 
-  return response;
+  async handle (store, type, payload, meta) {
+    let response;
+    const { effect, resolve, reject } = meta;
+    const queue = this.index;
+    const take = meta.take || 'every:parallel';
+
+    this._updateState(type);
+
+    try {
+      response = await effect(payload);
+
+      if (this._isTakeLatest(take, type, queue)) return;
+
+      store.dispatch({
+        type: resolve.type,
+        payload: {
+          ...payload,
+          type,
+          response,
+          state: store.getState()
+        }
+      });
+    } catch (error) {
+      store.dispatch({
+        type: reject.type,
+        error: {
+          ...payload,
+          type,
+          error,
+          state: store.getState()
+        }
+      });
+    }
+
+    return response;
+  }
 }
+
+export default new Async();
