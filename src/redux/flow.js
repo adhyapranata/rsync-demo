@@ -8,14 +8,16 @@ export const loadInitialData = createAction('LOAD_INITIAL_DATA', (payload) => {
     meta: {
       flow: {
         actions: [
-          {
-            effect: userSlice.actions.requestGetUsers,
-            break: ({ response }) => !response.data.args.users.length
-          },
-          {
-            prepare: loadInitialDataParams.requestGetPosts,
-            effect: postSlice.actions.requestGetPosts,
-          }
+          [
+            {
+              effect: userSlice.actions.requestGetUsers,
+              break: ({ response }) => !response.data.args.users.length
+            },
+            {
+              prepare: loadInitialDataParams.requestGetPosts,
+              effect: postSlice.actions.requestGetPosts,
+            }
+          ]
         ],
         resolve: { type: 'flow/resolveLoadInitialData' },
         reject: { type: 'flow/rejectLoadInitialData' },

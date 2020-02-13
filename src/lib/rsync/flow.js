@@ -50,48 +50,80 @@ export class Flow {
   }
 
   _preparePayload(store, payload, flowAction, prevResponse) {
+    payload = { ...payload, prevResponse }
     return !flowAction.prepare
-      ? { ...payload, prevResponse }
+      ? payload
       : this._attachParamsToPayload(
           store,
-          { ...payload, prevResponse },
+          payload,
           flowAction,
           prevResponse
         );
   }
 
-  async handle(store, type, payload, meta) {
-    let response;
-    let prevResponse = [];
+  async _run(props) {
     let asyncAction = {};
+    let {
+      store,
+      type,
+      payload,
+      flowAction,
+      prevResponse
+    } = props;
+
+    payload = this._preparePayload(store, payload, flowAction, prevResponse);
+    asyncAction = flowAction.effect(payload);
+
+    this._triggerReducer(store, asyncAction, payload);
+    let response = await this._triggerEffect(store, asyncAction, payload);
+
+    if (this._responseIsNotValid(response, store, flowAction, payload)) {
+      throw Error(`${type}_EXCEPTION: Action ${asyncAction.type} is broken by user condition`);
+    }
+
+    return [...prevResponse, { response, type: asyncAction.type }];
+  }
+
+  async handle(store, type, payload, meta) {
+    let prevResponse = [];
     const { actions, resolve, reject, take } = meta;
     const flowTake = take === undefined ? 'first' : take;
     
     if (this.blockFlow) {
       if (flowTake === 'every:serial') this._addToQueue(type, payload, meta);
       return;
-    };
+    }
 
     this.blockFlow = flowTake === 'first' || flowTake === 'every:serial';
 
     try {
       for (const flowAction of actions) {
-        payload = this._preparePayload(store, payload, flowAction, prevResponse);
-        asyncAction = flowAction.effect(payload);
-
-        this._triggerReducer(store, asyncAction, payload);
-        response = await this._triggerEffect(store, asyncAction, payload);
-
-        if (this._responseIsNotValid(response, store, flowAction, payload)) {
-          throw Error(`${type}_EXCEPTION: Action ${asyncAction.type} is broken by user condition`);
+        let props = {
+          store,
+          type,
+          payload,
+          flowAction,
+          prevResponse
         }
 
-        prevResponse = [...prevResponse, { response, type: asyncAction.type }];
+        if (Array.isArray(flowAction)) {
+          for (const subFlowAction of flowAction) {
+            prevResponse = await this._run({
+              ...props,
+              flowAction: subFlowAction,
+              prevResponse
+            })
+          }
+
+          continue;
+        }
+
+        prevResponse = await this._run(props)
       }
 
-      store.dispatch({ type: resolve.type });
+      store.dispatch({ type: resolve.type, responses: prevResponse });
     } catch (error) {
-      store.dispatch({ type: reject.type });
+      store.dispatch({ type: reject.type, error });
     } finally {
       this.blockFlow = false;
 

@@ -7,8 +7,8 @@ import './Post.css';
 
 function Post(props) {
   useEffect(() => {   
-    init(props);
-    // requestGetPosts(props);
+    // init(props);
+    requestGetPosts(props);
   }, []);
 
   useEffect(() => {   

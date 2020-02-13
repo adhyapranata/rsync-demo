@@ -70,6 +70,8 @@ class Async {
     this._updateState(type);
 
     try {
+      if (this._isTakeLatest(take, type, queue)) return;
+
       response = await effect(payload);
 
       if (this._isTakeLatest(take, type, queue)) return;
