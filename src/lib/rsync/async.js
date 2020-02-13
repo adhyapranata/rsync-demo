@@ -91,11 +91,19 @@ class Async {
     }
 
     try {
-      if (this._isTakeLatest(take, type, queue) || this._isCancelled(type)) return;
+      if (this._isTakeLatest(take, type, queue)) return;
+      if (this._isCancelled(type)) {
+        if (effect) await effect(payload);
+        return;
+      }
 
       response = await effect(payload);
 
-      if (this._isTakeLatest(take, type, queue) || this._isCancelled(type)) return;
+      if (this._isTakeLatest(take, type, queue)) return;
+      if (this._isCancelled(type)) {
+        if (effect) await effect(payload);
+        return;
+      }
 
       store.dispatch({
         type: resolve.type,
