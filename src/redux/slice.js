@@ -9,7 +9,7 @@ export const counterSlice = createSlice({
     increment: state => state + 1,
     decrement: state => state - 1
   }
-})
+});
 
 export const userSlice = createSlice({
   name: 'user',
@@ -49,12 +49,34 @@ export const userSlice = createSlice({
     }),
     rejectRequestGetUsers: (state, action) => ({
       ...state,
-      errros: [...state.errors, action.payload.error],
+      errors: [...state.errors, action.payload.error],
       isFetching: false,
       isFetched: true
+    }),
+    cancelRequestGetUsers: {
+      reducer(state, action) {
+        return state;
+      },
+      prepare(payload) {
+        return {
+          payload,
+          meta: {
+            async: {
+              cancel: { type: 'user/requestGetUsers' },
+              resolve: { type: 'user/resolveCancelRequestGetUsers' },
+              take: 'latest'
+            }
+          }
+        }
+      }
+    },
+    resolveCancelRequestGetUsers: (state, action) => ({
+      ...state,
+      isFetching: false,
+      isFetched: false
     })
   }
-})
+});
 
 export const postSlice = createSlice({
   name: 'post',
@@ -94,9 +116,30 @@ export const postSlice = createSlice({
     }),
     rejectRequestGetPosts: (state, action) => ({
       ...state,
-      errros: [...state.errors, action.payload.error],
+      errors: [...state.errors, action.payload.error],
       isFetching: false,
       isFetched: true
+    }),
+    cancelRequestGetPosts: {
+      reducer(state, action) {
+        return state;
+      },
+      prepare(payload) {
+        return {
+          payload,
+          meta: {
+            async: {
+              cancel: { type: 'post/requestGetPosts' },
+              cancelled: { type: 'post/requestGetPostsCancelled' }
+            }
+          }
+        }
+      }
+    },
+    requestGetPostsCancelled: (state, action) => ({
+      ...state,
+      isFetching: false,
+      isFetched: false
     })
   }
 });
