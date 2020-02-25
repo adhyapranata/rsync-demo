@@ -1,5 +1,13 @@
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
 
+## Get Started
+In this demo, you can find three implementations of [RSync](https://github.com/adhyapranata/rsync) using:
+- Plain Redux
+- Redux Toolkit
+- Redux Sauce
+
+To switch between implementation, you can change the import statement in the `src/index.js` file.
+
 ## Available Scripts
 
 In the project directory, you can run:
