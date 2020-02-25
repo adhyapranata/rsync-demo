@@ -1,4 +1,4 @@
-import { requestGetUser, requestGetPosts } from './action'
+import action from './action'
 import { loadInitialDataParams } from './prepare'
 
 export function loadInitialData (payload) {
@@ -10,12 +10,12 @@ export function loadInitialData (payload) {
         actions: [
           [
             {
-              effect: requestGetUser,
+              effect: action.requestGetUser,
               break: ({ response }) => !response.data.args.user
             },
             {
               prepare: loadInitialDataParams.requestGetPosts,
-              effect: requestGetPosts
+              effect: action.requestGetPosts
             }
           ]
         ],

@@ -1,20 +1,10 @@
-import { createSlice } from '@reduxjs/toolkit';
-import api from './api';
-
-
-export const counterSlice = createSlice({
-  name: 'counter',
-  initialState: 0,
-  reducers: {
-    increment: state => state + 1,
-    decrement: state => state - 1
-  }
-});
+import { createSlice } from '@reduxjs/toolkit'
+import api from '../api'
 
 export const userSlice = createSlice({
   name: 'user',
   initialState: {
-    data: [],
+    data: {},
     errors: [],
     selected: {},
     isFetching: false,
@@ -23,60 +13,60 @@ export const userSlice = createSlice({
     isQueried: false
   },
   reducers: {
-    requestGetUsers: {
-      reducer(state, action) {
-        return {...state, isFetching: true, isFetched: false};
+    requestGetUser: {
+      reducer (state, action) {
+        return { ...state, isFetching: true, isFetched: false }
       },
-      prepare(payload) {
+      prepare (payload) {
         return {
           payload,
           meta: {
             async: {
-              effect: () => api.user.index(),
-              resolve: { type: 'user/resolveRequestGetUsers' },
-              reject: { type: 'user/rejectRequestGetUsers' },
+              effect: () => api.user.show(),
+              resolve: { type: 'user/resolveRequestGetUser' },
+              reject: { type: 'user/rejectRequestGetUser' },
               take: 'latest'
             }
           }
         }
       }
     },
-    resolveRequestGetUsers: (state, action) => ({
+    resolveRequestGetUser: (state, action) => ({
       ...state,
-      data: JSON.parse(action.payload.response.data.args.users),
+      data: JSON.parse(action.payload.response.data.args.user),
       isFetching: false,
       isFetched: true
     }),
-    rejectRequestGetUsers: (state, action) => ({
+    rejectRequestGetUser: (state, action) => ({
       ...state,
-      errors: [...state.errors, action.payload.error],
+      errors: [...state.errors, action.error],
       isFetching: false,
       isFetched: true
     }),
-    cancelRequestGetUsers: {
-      reducer(state, action) {
-        return state;
+    cancelRequestGetUser: {
+      reducer (state, action) {
+        return state
       },
-      prepare(payload) {
+      prepare (payload) {
         return {
           payload,
           meta: {
             async: {
-              cancel: { type: 'user/requestGetUsers' },
-              resolve: { type: 'user/resolveCancelRequestGetUsers' },
+              cancel: { type: 'user/requestGetUser' },
+              resolve: { type: 'user/resolveCancelRequestGetUser' },
               take: 'latest'
             }
           }
         }
       }
     },
-    resolveCancelRequestGetUsers: (state, action) => ({
+    resolveCancelRequestGetUser: (state, action) => ({
       ...state,
       isFetching: false,
       isFetched: false
     })
   }
-});
+})
 
 export const postSlice = createSlice({
   name: 'post',
@@ -91,10 +81,10 @@ export const postSlice = createSlice({
   },
   reducers: {
     requestGetPosts: {
-      reducer(state, action) {
-        return {...state, isFetching: true, isFetched: false};
+      reducer (state, action) {
+        return { ...state, isFetching: true, isFetched: false }
       },
-      prepare(payload) {
+      prepare (payload) {
         return {
           payload,
           meta: {
@@ -116,15 +106,15 @@ export const postSlice = createSlice({
     }),
     rejectRequestGetPosts: (state, action) => ({
       ...state,
-      errors: [...state.errors, action.payload.error],
+      errors: [...state.errors, action.error],
       isFetching: false,
       isFetched: true
     }),
     cancelRequestGetPosts: {
-      reducer(state, action) {
-        return state;
+      reducer (state, action) {
+        return state
       },
-      prepare(payload) {
+      prepare (payload) {
         return {
           payload,
           meta: {
@@ -142,4 +132,4 @@ export const postSlice = createSlice({
       isFetched: false
     })
   }
-});
+})

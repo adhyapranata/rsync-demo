@@ -11,13 +11,20 @@
     "react": "^16.12.0",
     "react-dom": "^16.12.0",
     "react-redux": "^7.1.3",
-    "react-scripts": "3.3.1"
+    "react-scripts": "3.3.1",
+    "redux": "^4.0.5",
+    "redux-rsync": "git+ssh://git@github.com:adhyapranata/rsync.git#develop",
+    "reduxsauce": "^1.1.2"
+  },
+  "devDependencies": {
+    "standard": "^14.3.1"
   },
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "lint": "standard"
   },
   "eslintConfig": {
     "extends": "react-app"
